@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
+	<!-- 自动扫描 -->
+	<context:component-scan base-package="com.fnst"></context:component-scan>
+	<context:property-placeholder location="classpath:db.properties" />
+
+	<!-- 配置C3P0数据源 -->
+
+	<bean id="datasource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${driverClass}"></property>
+		<property name="user" value="${user}"></property>
+		<property name="password" value="${password}"></property>
+		<property name="jdbcUrl" value="${jdbcUrl}"></property>
+	</bean>
+
+	<!-- 配置 MyBatis整合Spring 不需要mybatis的配置映射文件 -->
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="datasource"></property>
+		<!-- 自动扫描Mapping下的xml -->
+		<property name="mapperLocations" value="classpath:com/fnst/mapper/*.xml"></property>
+	</bean>
+	<!-- DAO接口所在包名，Spring会自动查找其下的类 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.fnst.dao" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+
+
+	<!-- @Controller解析 -->
+	<mvc:annotation-driven />
+	<!-- 不拦截静态资源配置 -->
+	<mvc:default-servlet-handler />
+	<!-- 自动扫描该包，使SpringMVC认为包下用了@controller注解的类是控制器 com.fnst.controller -->
+	<context:component-scan base-package="com.fnst.controller" />
+
+	<!-- 配置试图解析器 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix" value="/WEB-INF/views/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+
+
+	<!-- 拦截器配置-->
+
+	<mvc:interceptors> 
+	<mvc:interceptor> 
+			<mvc:mapping path="/admin/*" /> 
+		<bean class="com.fnst.interceptors.MyIntercaptors"></bean> 
+
+ 		</mvc:interceptor>
+ 	</mvc:interceptors>
+
+
+
+<!--通过处理器映射DefaultAnnotationHandlerMapping来开启支持@Controller注解-->
+<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping" />
+<!--通过处理器适配器AnnotationMethodHandlerAdapter来开启支持@RequestMapping注解-->
+<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+    <property name="messageConverters">
+        <list>
+            <!-- 设置返回字符串编码 -->
+            <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                <property name = "supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>application/json;charset=UTF-8</value>
+                    </list>
+                </property>
+            </bean>
+            <!-- json转换器 -->
+            <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>application/json;charset=UTF-8</value>
+                    </list>
+                </property>
+            </bean>
+        </list>
+    </property>
+</bean>
+
+<!-- 国际化资源配置,资源文件绑定器-->
+<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+    <!-- 国际化资源文件配置,指定properties文件存放位置 -->
+    <property name="basename" value="classpath:com/fnst/messages/message" />
+    <!-- 如果在国际化资源文件中找不到对应代码的信息，就用这个代码作为名称  -->               
+    <property name="useCodeAsDefaultMessage" value="true" />
+</bean>
+<!-- 动态切换国际化 ,国际化放在session中 -->
+<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver"></bean>
+<mvc:interceptors>
+    <!-- 国际化操作拦截器 如果采用基于（请求/Session/Cookie）则必需配置 -->
+    <bean class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+        <!-- 通过这个参数来决定获取那个配置文件 -->
+        <property name="paramName" value="language" />
+    </bean>
+</mvc:interceptors>
+
+<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<property name="maxUploadSize" value="1024000"></property>
+</bean>
+
+
+<!-- 配置统一异常处理 -->
+<!-- <bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver"> -->
+<!-- 	<property name="tatusCodess"> -->
+<!-- 		<props key="error"></props>	 -->
+<!-- 	</property> -->
+	
+	
+<!-- </bean> -->
+
+
+
+
+
+
+
+</beans>

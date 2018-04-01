@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fnst.dao.ProjectDao">
+
+
+	<resultMap type="com.fnst.entity.Project" id="ProjectResult">
+		<result column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="status" property="status" />
+		<result column="leader" property="leader" />
+		<result column="description" property="description" />
+		<result column="create_date" property="createDate" />
+	</resultMap>
+
+	<select id="getProjectList" resultMap="ProjectResult"
+		parameterType="Map">
+		select * from project
+		<where>
+			<if test="name != null and name != '' ">
+				and name like #{name}
+			</if>
+			<if test="status != null and status != '' ">
+				and status = #{status}
+			</if>
+			<if test="leader != null and leader != '' ">
+				and leader = #{leader}
+			</if>
+			<if test="ids != null ">
+				and id
+				<if test="ids.size() > 0 ">
+					in
+					<foreach collection="ids" item="item" index="index" open="("
+						separator="," close=")">
+						#{item}
+					</foreach>
+				</if>
+				<if test="ids.size() == 0">
+					= 0
+				</if>
+			</if>
+		</where>
+		order by create_date desc
+		<if test="start != null and size != null">
+			limit #{start}, #{size}
+		</if>
+	</select>
+
+	<select id="getProjectManageListCount" resultType="Integer" parameterType="Map">
+		select count(*) from project
+		<where>
+			<if test="name != null and name != '' ">
+				and name like #{name}
+			</if>
+			<if test="status != null and status != '' ">
+				and status = #{status}
+			</if>
+			
+			<if test="leader != null ">
+				and leader
+				<if test="leader.size() > 0 ">
+					in
+					<foreach collection="leader" item="item" index="index"
+						open="(" separator="," close=")">
+						#{item}
+					</foreach>
+				</if>
+				<if test="leader.size() == 0">
+					= 0
+				</if>
+			</if>
+			<if test="projectIds != null">
+				and id
+				<if test="projectIds.size() > 0 ">
+					in
+					<foreach collection="projectIds" item="item" index="index"
+						open="(" separator="," close=")">
+						#{item}
+					</foreach>
+				</if>
+			</if>
+		</where>
+	</select>
+
+
+	<select id="getProjectManageList" resultMap="ProjectResult"
+		parameterType="Map">
+		select * from project
+		<where>
+			<if test="name != null and name != '' ">
+				and name like #{name}
+			</if>
+			<if test="status != null and status != '' ">
+				and status = #{status}
+			</if>
+			
+			<if test="leader != null ">
+				and leader
+				<if test="leader.size() > 0 ">
+					in
+					<foreach collection="leader" item="item" index="index"
+						open="(" separator="," close=")">
+						#{item}
+					</foreach>
+				</if>
+				<if test="leader.size() == 0">
+					= 0
+				</if>
+			</if>
+			
+			
+			<if test="projectIds != null">
+				and id
+				<if test="projectIds.size() > 0 ">
+					in
+					<foreach collection="projectIds" item="item" index="index"
+						open="(" separator="," close=")">
+						#{item}
+					</foreach>
+				</if>
+			</if>
+
+
+		</where>
+		order by create_date desc
+		<if test="start != null and size != null">
+			limit #{start}, #{size}
+		</if>
+	</select>
+	
+	
+	<select id="getProjectListCount" resultType="int" parameterType="Map">
+		select count(*) from project
+		<where>
+			<if test="name != null and name != '' ">
+				and name like #{name}
+			</if>
+			<if test="status != null and status != '' ">
+				and status = #{status}
+			</if>
+			<if test="leader != null and leader != '' ">
+				and leader = #{leader}
+			</if>
+			<if test="ids != null ">
+				and id
+				<if test="ids.size() > 0 ">
+					in
+					<foreach collection="ids" item="item" index="index" open="("
+						separator="," close=")">
+						#{item}
+					</foreach>
+				</if>
+				<if test="ids.size() == 0">
+					= 0
+				</if>
+			</if>
+		</where>
+	</select>
+	
+	<insert id="addProject" parameterType="com.fnst.entity.Project" useGeneratedKeys="true" keyProperty="id">
+	    insert into project values(null, #{name}, #{createDate}, #{status}, #{leader}, #{description})
+	</insert>
+	
+	<update id="updateProject" parameterType="Map">
+	    update project 
+	    <set>
+	        <if test="name != null and name != '' ">
+	           name = #{name},
+	        </if>
+   	        <if test="status != null and status != '' ">
+	           status = #{status},
+	        </if>
+   	        <if test="description != null and description != '' ">
+	           description = #{description},
+	        </if>
+	    </set>
+	    where id = #{proId}
+	</update>
+
+	<update id="addProjectAdmin" parameterType="Map">
+	    update project set leader = #{userId} where id = #{proId}
+	</update>
+	
+	<select id="getProjectById" parameterType="Integer" resultMap="ProjectResult">
+	    select * from project where id = #{id}
+	</select>
+	<select id="getProListByUID" parameterType="integer" resultMap="ProjectResult">
+	select * from project where id IN(SELECT distinct(pro_id) from pro_user where user_id=#{userId})
+	</select>
+	<select id="getProjectListAll" parameterType="integer" resultMap="ProjectResult">
+	select * from project
+	</select>
+	<select id="getProjectListByLeaderId" parameterType="integer" resultMap="ProjectResult">
+	select * from project where leader=#{userId}
+	</select>
+	
+	<select id="getStatusCount" parameterType="Map" resultType="integer">
+		select Count(*) from bug_info where status=#{0} and pro_id=#{1}
+	</select>
+	<select id="getCategoryCount" parameterType="Map" resultType="integer">
+		select Count(*) from bug_info where category=#{0} and pro_id=#{1}
+	</select>
+	<select id="getPriorityCount" parameterType="Map" resultType="integer">
+		select Count(*) from bug_info where priority=#{0} and pro_id=#{1}
+	</select>
+	<select id="getOsCount" parameterType="Map" resultType="integer">
+		select Count(*) from bug_info where priority=#{0} and pro_id=#{1}
+	</select>
+	
+	
+</mapper>
+
+
